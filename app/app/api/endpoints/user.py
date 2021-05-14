@@ -1,15 +1,31 @@
-from flask import jsonify
+from flask import Response, request
+from flask_restful import Resource
+from ..models import User
+from flask_jwt_extended import jwt_required
 
-from ...core.database import users
-from ...main import app
-from ..utils import senseless_print
+class UserApi(Resource):
+    @jwt_required()
+    def get(self):
+        user = User.objects().to_json()
+        return Response(user, mimetype="application/json", status=200)
+        # return Response({
+        #     'accessToken': 'Hello World', 
+        #     'refreshToken': 'World Hello'
+        #     }, mimetype="application/json", status=200)
 
+    # create user
+    def post(self):
+        body = request.get_json()
+        user = User(**body)
+        user.hash_password()
+        user.save()
+        id = user.id
+        ## save
+        return {'id': str(id)}, 200
+    
+    def delete(self, id):
+        return '', 200
+    
+    # def get(self, id):
+    #     return {'accessToken': 'get byId', 'refreshToken': 'get by id'}, 200
 
-@app.route("/users/")
-def route_users():
-    users_data = []
-    for user in users:
-        user_data = {"name": user.name, "email": user.email}
-        users_data.append(user_data)
-    senseless_print()
-    return jsonify(users_data)
